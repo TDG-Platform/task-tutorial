@@ -1,12 +1,11 @@
-# ENVI NNDiffuse PanSharpening  (Editing In Progress)
+# ENVI NNDiffuse PanSharpening
 
-This task performs NNDiffuse pan sharpening using a low-resolution raster and a high-resolution panchromatic raster.
+This task performs Nearest Neighbor Diffuse (NND) Pansharpening using a low-resolution raster and a high-resolution panchromatic raster.
 
-NNDiffuse pan sharpening works best when the spectral response function of each multispectral band has minimal overlap with one another, and the combination of all multispectral bands covers the spectral range of the panchromatic raster.
-The following are input raster requirements for running the NNDiffuse pan sharpening algorithm:
+NND Pansharpening works best when the spectral response function of each multispectral band has minimal overlap with one another, and the combination of all multispectral bands covers the spectral range of the panchromatic raster.
+The following are input raster requirements for running the NND Pansharpening algorithm:
 
- - The pixel size of the low-resolution raster must be an integral multiple of the pixel size of the high-resolution raster. If it is
-   not, then pre-process (resample) the rasters.
+ - The pixel size of the low-resolution raster must be an integral multiple of the pixel size of the high-resolution raster. If it is not, then pre-process (resample) the rasters.
  - When the rasters have projection information, it must be in the same
    projection. If it is not the same, then reproject the rasters.
  - The rasters must be aligned. If the rasters have misalignment, then
@@ -22,9 +21,9 @@ The following are input raster requirements for running the NNDiffuse pan sharpe
 
 ### Table of Contents
  * [Quickstart](#quickstart) - Get started!
- * [Runtime](#runtime) - Detailed Description of Inputs
  * [Inputs](#inputs) - Required and optional task inputs.
  * [Outputs](#outputs) - Task outputs and example contents.
+ * [Runtime](#runtime) - Detailed Description of Inputs
  * [Known Issues](#known-issues)
  * [Contact Us](#contact-us)
 
@@ -38,7 +37,8 @@ For IKONOS, Landsat-8, Sentinel and similar sensors that have ortho-ready level 
 
 	# Define Task and Data Types
 	pansharpTask = gbdx.Task("ENVI_NNDiffusePanSharpening")
-	pansharpTask.inputs.input_raster_metadata = '{"sensor type": "IKONOS"}'
+	pansharpTask.inputs.input_low_resolution_raster_metadata = '{"sensor type": "IKONOS"}'
+	pansharpTask.inputs.input_high_resolution_raster_metadata = '{"sensor type": "IKONOS"}'
 
 	# Input High- and Low-Resolution data
 	# Edit the following path to reflect a specific path to the imagery input files
@@ -57,21 +57,28 @@ For IKONOS, Landsat-8, Sentinel and similar sensors that have ortho-ready level 
 
 ```
 
+     
+### Inputs
+
+Remember to input a raster metadata type for both the low-resolution and high-resolution images as in the QuickStart example above.
 
 Examples of different sensor data sets  | Script
 ----------------- | -------------------------------------------------------
-IKONOS   |   task.inputs.input_raster_metadata = '{"sensor type": "IKONOS"}'
-Landsat-8   |     task.inputs.input_raster_metadata = '{"sensor type": "Landsat OLI"}'
-Sentinel     |     task.inputs.input_raster_metadata = '{"sensor type": "SENTINEL-2"}'
+IKONOS   |   task.input_raster_metadata = '{"sensor type": "IKONOS"}'
+Landsat-8   |     task.input_raster_metadata = '{"sensor type": "Landsat OLI"}'
+Sentinel     |     task.input_raster_metadata = '{"sensor type": "SENTINEL-2"}'
 
 
-### Inputs
-The following table lists all taskname inputs.
-Mandatory (optional) settings are listed as Required = True (Required = False).
+The following table lists all taskname inputs.  Mandatory (optional) settings are listed as Required = True (Required = False).
 
-  Name  |  Required  |  Default  |  Valid Values  |  Description  
---------|:----------:|-----------|----------------|---------------
-
+  Name  |  Required  |  Valid Values  |  Description  
+--------|:----------:|----------------|---------------
+input_low_resolution_raster |  True  | raster  | Specify a low-resolution raster.
+input_high_resolution_raster  |  True  | raster  |  Specify a high-resolution panchromatic raster.
+input_low_resolution_raster_metadata |  True  |  code  | Describes sensor input type as shown above in examples.  Use these lines of code for the appropriate sensor. Required for these sensors. 
+input_high_resolution_raster_metadata |  True  |  code  | Describes sensor input type as shown above in examples.  Use these lines of code for the appropriate sensor. Required for these sensors. 
+intensity_smoothness  | False  |  positive number  | A positive number that defines the intensity smoothness factor (σ) of the NNDiffuse pan sharpening algorithm. A smaller INTENSITY_SMOOTHNESS value will restrict diffusion and produce sharper images, but will have more noise. For example, a smaller value is good for pan sharpened images that will be used for visualization. A larger INTENSITY_SMOOTHNESS value will produce smoother results with less noise, which is suggested for images that will be used for classification and segmentation purposes. A larger value is also suggested for panchromatic scenes with high contrast (they require less diffusion sensitivity), and with complex scenes (to reduce the possibility of noise). The default is to dynamically adjust to local similarity, as shown in the equation in the ENVI Document. You can enter a value to override the default, for example, a value in the range 10 x √2 to 20.
+ignore_validate  | False  | number |  Set this property to a value of 1 to run the task, even if validation of properties fails. This is an advanced option for users who want to first set all task properties before validating whether they meet the required criteria. This property is not set by default, which means that an exception will occur if any property does not meet the required criteria for successful execution of the task.
 
 ### Outputs
 The following table lists all taskname outputs.
@@ -79,10 +86,13 @@ Mandatory (optional) settings are listed as Required = True (Required = False).
 
   Name  |  Required  |  Default  |  Valid Values  |  Description  
 --------|:----------:|-----------|----------------|---------------
+output_raster_uri   | True  | None  | string  | Specify a string with the fully qualified filename and path of the output raster. If you do not specify this property, the output raster is only temporary. Once the raster has no remaining references, ENVI deletes the temporary file.
+pixel_size_ratio  | False  |  4  | meters  | A scalar number that defines the pixel size ratio of the low-resolution raster and the high-resolution raster. The NNDiffuse pan-sharpening algorithm requires that the pixel size ratio be an integer. If this property is not set, the value is determined from the metadata of the input rasters. For example, the pixel size of Ikonos low-resolution MSI data is 4 meters, and the pixel size of Ikonos high-resolution Pan data is 1 meter. The ratio is 4/1, so the value is 4.
+spatial_smoothness  |  False  | PIXEL_SIZE_RATIO x 0.62 |  positive number | A positive number that defines the spatial smoothness factor (σs) of the NNDiffuse pan sharpening algorithm. SPATIAL_SMOOTHNESS should be set to a value that will resemble a bicubic interpolation kernel. The default value is PIXEL_SIZE_RATIO x 0.62.
 
 
 ### Advanced
-This task requires that WorldView-2, Worldview-3, GeoEYE-1 and Quickbird imagery has been pre-processed using the Advanced Image Processor for proper orthorectification (ADD LINK).  The example below uses a WorldView-3 Image from Tracy California.
+This task requires that WorldView-2, Worldview-3, GeoEYE-1 and Quickbird imagery has been pre-processed using the [Advanced Image Preprocessor](#https://github.com/TDG-Platform/docs/blob/master/Advanced_Image_Preprocessor.md) for proper orthorectification.  The example below uses a WorldView-3 Image from Tracy California.
 
 
 ```python
@@ -111,6 +121,8 @@ This task requires that WorldView-2, Worldview-3, GeoEYE-1 and Quickbird imagery
 	
 	# Edit the following line to reflect specific folder(s) for the output file
 	workflow.savedata(pansharpTask.outputs.output_raster_uri, location='Customer's Output S3 Location')
+	workflow.savedata(aoptask1.outputs.data, location ='Customer's Output S3 Location') # saving this data is optional
+	workflow.savedata(aoptask2.outputs.data, location ='Customer's Output S3 Location') # saving this data is optional
 	workflow.execute()
 	print workflow.id
 	print workflow.status
@@ -125,33 +137,28 @@ For details on the methods of testing the runtimes of the task visit the followi
 
   Sensor Name  |  Total Pixels  |  Total Area (k2)  |  Time(secs)  |  Time/Area k2
 --------|:----------:|-----------|----------------|---------------
-QB | 41,551,668 | 312.07 |  |  |
-WV02|35,872,942|329.87| | |
-WV03|35,371,971|196.27| | |
-GE01| 57,498,000|332.97|| |
-IKONOS |      |       |    |
-
-     
-     
-### Inputs:
-
-Name                     |       File Type       |   Description
--------------------------|:---------------------:|---------------------------------
+QB | 41,551,668 | 312.07 | 1242.554  | 3.98 |
+WV02|35,872,942|329.87| 4555.128 | 13.81 |
+WV03|35,371,971|196.27| 6741.883 | 34.35 |
+GE01| 57,498,000|332.97| 2286.475 | 6.87 |
+IKONOS | 29,976,302     | 273.34   | 367.958  | 1.35   |
 
 
 #### Technical Notes
 
 
-
 **Data Structure for Expected Outputs:**
 
-Your Processed classification file will be written to the specified S3 Customer Location in the ENVI file format and tif format(e.g.  s3://gbd-customer-data/unique customer id/named directory/classification.hdr).  
+Your Processed classification file will be written to the specified S3 Customer Location in the ENVI .hdr file and tiff format(e.g.  s3://gbd-customer-data/unique customer id/named directory/classification.hdr).  
 
-
-For background on the development and implementation of Classification Smoothing refer to the [ENVI Documentation](https://www.harrisgeospatial.com/docs/classificationtutorial.html)
+For background on the development and implementation of NND PanSharpening refer to the [ENVI Documentation](https://www.harrisgeospatial.com/docs/classificationtutorial.html)
 
 Additional References:
 Sun, W., B. Chen, and D.W. Messinger. "Nearest Neighbor Diffusion Based Pan Sharpening Algorithm for Spectral Images." Optical Engineering 53, no. 1 (2014).
+
+###Known Issues
+
+Sentinel and Landsat-8 data have not yet been tested, but should work like IKONOS.
 
 ###Contact Us
 Document Owner - Kathleen Johnson - kajohnso@digitalglobe.com

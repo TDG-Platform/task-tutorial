@@ -23,14 +23,13 @@ This script uses Aadvanced Image Preprocessor to produce orthorectified and atmo
 from gbdxtools import Interface
 gbdx = Interface()
 
-# WV03 Image over Naples, Italy
 # Make sure both pan sharpening and DRA are disabled in order to get separate PAN and MS outputs.
 # The data input and output lines must be edited to point to an authorized customer S3 location)
 data = 's3://gbd-customer-data/CustomerAccount#/PathToImage/'
 aoptask = gbdx.Task('AOP_Strip_Processor', data=data, enable_pansharpen=False, enable_dra=False)
 workflow = gbdx.Workflow([ aoptask ])
 #Edit the following line(s) to reflect specific folder(s) for the output file (example location provided)
-workflow.savedata(aoptask.outputs.data, location='AOPOutput')
+workflow.savedata(aoptask.outputs.data, location='S3 gbd-customer-data location/<customer account>/output directory')
 
 workflow.execute()
 
@@ -50,15 +49,14 @@ In [2]: # First Initialize the Environment
 In [3]: from gbdxtools import Interface
 In [4]: gbdx = Interface()
   2016-06-24 16:29:53,856 - gbdxtools - INFO - Logger initialized
-In [5]: # WV03 Image over Naples, Italy
-In [6]: # Make sure both pan sharpening and DRA are disabled in order to get separate PAN and MS outputs.
-In [7]: data = "S3 gbd-customer-data location/<customer account>/input directory"
-In [8]: aoptask = gbdx.Task('AOP_Strip_Processor', data=data, enable_pansharpen=False, enable_dra=False)
-In [9]: workflow = gbdx.Workflow([ aoptask ])  
-In [10]: workflow.savedata(aoptask.outputs.data, location='S3 gbd-customer-data location/<customer account>/output directory')
-In [11]: workflow.execute()
-Out[12]: u'4362772047134837472'
-In [13]: print workflow.id
+In [5]: # Make sure both pan sharpening and DRA are disabled in order to get separate PAN and MS outputs.
+In [6]: data = "S3 gbd-customer-data location/<customer account>/input directory"
+In [7]: aoptask = gbdx.Task('AOP_Strip_Processor', data=data, enable_pansharpen=False, enable_dra=False)
+In [8]: workflow = gbdx.Workflow([ aoptask ])  
+In [9]: workflow.savedata(aoptask.outputs.data, location='S3 gbd-customer-data location/<customer account>/output directory')
+In [10]: workflow.execute()
+Out[11]: u'4362772047134837472'
+In [12]: print workflow.id
   4362772047134837472
 ```
 
@@ -206,7 +204,7 @@ The `log` output port contains the location where a trace of log messages genera
   * The 'enable_pansharpen' output is a high-resolution RGB image.  The process merges the lower resolution multispectral image with the higher resolution panchromatic image to produce a high resolution multispectral image (RGB). The default is to run pansharpening.  It must be set to 'False' if you want preserve the full 8-band or 4-band image from the input image.
 
 #### Dynamic Range Adjustment
-  * The default for 'enable_dra' is on (True) and it must be set to 'False' to produce a 4-band or 8-band image (+/- panchromatic band). For all other Dynamic Range Adjustment Settings:  [see below](#using-dynammic-range-adjustment)
+  * The default for 'enable_dra' is on (True) and it must be set to 'False' to produce a 4-band or 8-band image (+/- panchromatic band).  If Pansharpening has been set to False, then DRA must also be manually set to False. For all other Dynamic Range Adjustment Settings:  [see below](#using-dynammic-range-adjustment)
 
 #### Set Tiling
   * The 'enable_tiling' setting allows the image to be rendered according to a specified grid size.  Tiling is used to improve performance of subsequent image processing steps in the workflow, especially when computing resources are limited. The default setting is off.
